@@ -1,6 +1,7 @@
 import csv
 import pandas as pd
 from pandas import DataFrame
+import numpy as np
 
 '''
 Get average rating across all episodes
@@ -20,13 +21,17 @@ Total average = 7.3491...
 episodes = "simpsons_episodes.csv"
 lines = "simpsons_script_lines.csv"
 
+epdf = pd.read_csv(episodes, encoding='utf-8', encoding_errors='ignore')
+linedf = pd.read_csv(lines, encoding = 'utf-8', encoding_errors='ignore')
+
+
+'''
 episodeList = []
 linedf = []
 
 with open(episodes, 'r') as f:
     dict_reader = csv.DictReader(f)
     episodeList = list(dict_reader)
-
 
 print(episodeList[1].keys())
 avgRating = 0
@@ -37,17 +42,31 @@ for episode in episodeList:
 avgRating = avgRating/len(episodeList)
 print(avgRating)
 
-linedf = pd.read_csv(lines, encoding = 'utf-8', encoding_errors='ignore')
-
 for episode in episodeList:
     #get sums of character ids with lines per episode
     #build/normalized episode profile
     # rating * percentage of lines for each episode = episode impact score
 
     id = episode['id']
-
+'''
 
 
 epLines = linedf[linedf['episode_id'] == 32]
-for charID in epLines['character_id'].unique():
+
+charScores = []
+for charID in linedf['character_id'].unique()[:5]:
     print(charID)
+    scores = []
+    for epID in linedf['episode_id'].unique():
+        totalLines = len(linedf[linedf['episode_id'] == epID])
+        charLines = len(linedf[(linedf['episode_id'] == epID) & (linedf['character_id'] == charID)])
+        epScore = epdf[epdf['id'] == epID]['imdb_rating']
+
+        #calculate score contributed per line by the character
+        perLineScore = (epScore * (charLines/totalLines))/epScore
+        scores.append(perLineScore)
+    charScores.append(tuple([charID, np.mean(scores)]))
+
+
+print(charScores)
+    
