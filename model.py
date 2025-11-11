@@ -2,6 +2,7 @@ import csv
 import pandas as pd
 from pandas import DataFrame
 import numpy as np
+from collections import defaultdict
 
 '''
 Get average rating across all episodes
@@ -22,7 +23,7 @@ episodes = "simpsons_episodes.csv"
 lines = "simpsons_script_lines.csv"
 
 epdf = pd.read_csv(episodes, encoding='utf-8', encoding_errors='ignore')
-linedf = pd.read_csv(lines, encoding = 'utf-8', encoding_errors='ignore')
+linedf = pd.read_csv(lines, encoding = 'utf-8', encoding_errors='ignore', low_memory=False)
 
 
 '''
@@ -52,7 +53,7 @@ for episode in episodeList:
 
 
 epLines = linedf[linedf['episode_id'] == 32]
-
+'''
 charScores = []
 for charID in linedf['character_id'].unique()[:5]:
     print(charID)
@@ -66,7 +67,32 @@ for charID in linedf['character_id'].unique()[:5]:
         perLineScore = (epScore * (charLines/totalLines))/epScore
         scores.append(perLineScore)
     charScores.append(tuple([charID, np.mean(scores)]))
+'''
 
 
-print(charScores)
-    
+char_scores = defaultdict(list)
+for epID in linedf['episode_id'].unique()[:300]:
+    epScore = epdf[epdf['id'] == epID]['imdb_rating']
+    lines = linedf[linedf['episode_id'] == epID]
+    for charId in lines['character_id'].unique():
+        if charId is not None:
+            line_count = lines[lines['character_id'] == charId]['character_id'].count()
+            line_percentage = line_count/len(lines)
+            score_percentage = line_percentage*epScore
+            char_scores[charId].append(float(score_percentage.iloc[0]))
+
+
+#print(char_scores)
+
+epId = linedf['episode_id'].head(1).reset_index(drop=True)
+epId = 255
+lines = linedf[linedf['episode_id'] == epId]
+
+totalScore = 0
+for charId in lines['character_id'].unique():
+    line_count = lines[lines['character_id'] == charId]['character_id'].count()
+    line_percentage = line_count/len(lines)
+    score = line_percentage * np.mean(char_scores[charId])
+    totalScore += score
+
+print(totalScore*10)
