@@ -81,31 +81,35 @@ for epID in linedf['episode_id'].unique():
             score_percentage = (line_percentage*epScore)
             char_scores[charId].append(float(score_percentage.iloc[0]))
 
-diffcount = 0
-epCount = 0
-stinkers = 0
+diffcounts = []
+epCounts = []
+stinkerses = []
 
 #print(char_scores)
 print("calculating episode predictions")
-epId = epdf['id'].unique()
-for id in epId:
-    lines = linedf[linedf['episode_id'] == id]
-    rating = epdf[epdf['id'] == id]['imdb_rating'].squeeze()
-    totalScore = 0
-    for charId in lines['character_id'].unique():
-        line_count = lines[lines['character_id'] == charId]['character_id'].count()
-        line_percentage = line_count/len(lines)
-        score = np.median(char_scores[charId])
-        totalScore += score
-    if totalScore == 0:
-        continue
-    totalScore+=2.31121017520551
-    diff = rating - totalScore
-    if abs(diff) > 2:
-        stinkers+=1
-    diffcount += diff
-    epCount+=1
-    print(f"Episode {id}: predicted rating {totalScore}, actual rating {rating}")
+for season in epdf['season'].unique():
+    diffcount = 0
+    epCount = 0
+    stinkers = 0
+    epId = epdf[epdf['season']==season]['id'].unique()
+    for id in epId:
+        lines = linedf[linedf['episode_id'] == id]
+        rating = epdf[epdf['id'] == id]['imdb_rating'].squeeze()
+        totalScore = 0
+        for charId in lines['character_id'].unique():
+            line_count = lines[lines['character_id'] == charId]['character_id'].count()
+            line_percentage = line_count/len(lines)
+            score = np.median(char_scores[charId])
+            totalScore += score
+        if totalScore == 0:
+            continue
+        totalScore+=2.31121017520551
+        diff = rating - totalScore
+        if abs(diff) > 2:
+            stinkers+=1
+        diffcount += diff
+        epCount+=1
+        print(f"Season: {season}, Episode {id}: predicted rating {totalScore}, actual rating {rating}")
 
 print(diffcount/epCount)
 print(stinkers)
