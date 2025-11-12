@@ -12,7 +12,8 @@ import torch.optim as optim
 
 def formatData(src):
     epdf = pd.read_csv(src, encoding='utf-8', encoding_errors='ignore')
-    features = epdf[['original_air_year', 'us_viewers_in_millions', 'season']].dropna(axis=0).to_numpy()
+    features = epdf[['original_air_year', 'us_viewers_in_millions', 'season', 'views']].dropna(axis=0).to_numpy()
+
     features = torch.from_numpy(features)
     labels = epdf['imdb_rating'].dropna(axis=0).to_numpy()
     labels = torch.tensor(labels, dtype=torch.long)  
@@ -175,7 +176,7 @@ if __name__ == '__main__':
     print(test_labels)
     
     #model time
-    input_size = 3
+    input_size = 4
     embedding_dim = 100
     hidden_size = 64
     output_size = 10  # 0-9
@@ -183,7 +184,7 @@ if __name__ == '__main__':
     model = NeuralNetwork(input_size, hidden_size, output_size)
     
     # Train
-    training_history = train(model, train_features, train_labels, epochs=30, learning_rate=0.001)
+    training_history = train(model, train_features, train_labels, epochs=50, learning_rate=0.001)
     
     print(training_history)
 
@@ -203,3 +204,12 @@ if __name__ == '__main__':
     print(f"Trained model saved to {outfile}")
 
     
+
+'''
+best so far:
+
+Test accuracy: 0.4831
+Test F1 score: 0.6514
+Test Precision score: 0.4831
+Test Recall score: 1.0000
+'''
