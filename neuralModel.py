@@ -88,7 +88,7 @@ def train(model, train_features, train_labels, epochs, learning_rate):
     return train_history
 
 
-def evaluate(model, test_features, test_labels):
+def evaluateRating(model, test_features, test_labels):
     """
     Evaluate the trained model on test data
     
@@ -138,11 +138,65 @@ def evaluate(model, test_features, test_labels):
 
     return {
         'test_accuracy': (TP+TN)/total, 
-        'test_precision': TP/(TP+FP),
-        'test_recall': TP/(TP+FN),
+        'test_precision': TP+1/(TP+FP)+1,
+        'test_recall': TP+1/(TP+FN)+1,
         'test_f1': (2*(TP/(TP+FP))*(TP/(TP+FN)))/(TP/(TP+FP) + (TP/(TP+FN))),
     }
 
+def evaluateSentiment(model, test_features, test_labels):
+    """
+    Evaluate the trained model on test data
+    
+    Args:
+        model: The trained neural network model
+        test_features: (tensor)
+        test_labels: (tensor)
+    
+    Returns:
+        a dictionary of evaluation metrics (include test accuracy at the minimum)
+        (You could import scikit-learn's metrics implementation to calculate other metrics if you want)
+    """
+    
+    ####################### 
+    # TODO: Implement the evaluation function
+    # Hints: 
+    # 1. Use torch.no_grad() for evaluation
+    # 2. Use torch.argmax() to get predicted classes
+    #######################
+    
+    model.eval()
+
+    with torch.no_grad():
+        prediction = model(test_features)
+        predicted_class = torch.argmax(prediction, dim=1)
+        #check and add to f1 calculations
+
+    TP = 0
+    FP= 0
+    TN = 0
+    FN = 0
+    total = predicted_class.size(dim=0)
+    for i in range(predicted_class.size(dim=0)):
+        print(f"{i}: prediction: {predicted_class[i]},real value: {test_labels[i]}  ")
+        if test_labels[i] >= 7:
+            if predicted_class[i] >= 7:
+                TP+=1
+            else:
+                FN+=1
+        else:
+            if predicted_class[i] >=7:
+                FP+=1
+            else:
+                TN+=1
+
+
+
+    return {
+        'test_accuracy': (TP+TN)/total, 
+        'test_precision': (TP+1)/(TP+FP+1),
+        'test_recall': (TP+1)/(TP+FN+1),
+        'test_f1': (2*(TP/(TP+FP))*(TP/(TP+FN)))/(TP/(TP+FP) + (TP/(TP+FN))),
+    }
 
 
 
@@ -184,13 +238,13 @@ if __name__ == '__main__':
     model = NeuralNetwork(input_size, hidden_size, output_size)
     
     # Train
-    training_history = train(model, train_features, train_labels, epochs=50, learning_rate=0.001)
+    training_history = train(model, train_features, train_labels, epochs=100, learning_rate=0.001)
     
     print(training_history)
 
     
     # Evaluate
-    evaluation_results = evaluate(model, test_features, test_labels)
+    evaluation_results = evaluateSentiment(model, test_features, test_labels)
     
     print(f"Model performance report: \n")
     print(f"Test accuracy: {evaluation_results['test_accuracy']:.4f}")
