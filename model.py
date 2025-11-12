@@ -69,30 +69,44 @@ for charID in linedf['character_id'].unique()[:5]:
     charScores.append(tuple([charID, np.mean(scores)]))
 '''
 
-
+print("calculating character scores")
 char_scores = defaultdict(list)
-for epID in linedf['episode_id'].unique()[:300]:
+for epID in linedf['episode_id'].unique():
     epScore = epdf[epdf['id'] == epID]['imdb_rating']
     lines = linedf[linedf['episode_id'] == epID]
     for charId in lines['character_id'].unique():
         if charId is not None:
             line_count = lines[lines['character_id'] == charId]['character_id'].count()
             line_percentage = line_count/len(lines)
-            score_percentage = line_percentage*epScore
+            score_percentage = (line_percentage*epScore)
             char_scores[charId].append(float(score_percentage.iloc[0]))
 
+diffcount = 0
+epCount = 0
+stinkers = 0
 
 #print(char_scores)
+print("calculating episode predictions")
+epId = epdf['id'].unique()
+for id in epId:
+    lines = linedf[linedf['episode_id'] == id]
+    rating = epdf[epdf['id'] == id]['imdb_rating'].squeeze()
+    totalScore = 0
+    for charId in lines['character_id'].unique():
+        line_count = lines[lines['character_id'] == charId]['character_id'].count()
+        line_percentage = line_count/len(lines)
+        score = np.median(char_scores[charId])
+        totalScore += score
+    if totalScore == 0:
+        continue
+    totalScore+=2.31121017520551
+    diff = rating - totalScore
+    if abs(diff) > 2:
+        stinkers+=1
+    diffcount += diff
+    epCount+=1
+    print(f"Episode {id}: predicted rating {totalScore}, actual rating {rating}")
 
-epId = linedf['episode_id'].head(1).reset_index(drop=True)
-epId = 255
-lines = linedf[linedf['episode_id'] == epId]
-
-totalScore = 0
-for charId in lines['character_id'].unique():
-    line_count = lines[lines['character_id'] == charId]['character_id'].count()
-    line_percentage = line_count/len(lines)
-    score = line_percentage * np.mean(char_scores[charId])
-    totalScore += score
-
-print(totalScore*10)
+print(diffcount/epCount)
+print(stinkers)
+#Scale base point offset based on which season the episode belongs to
