@@ -1,0 +1,93 @@
+import csv
+import pandas as pd 
+from tabulate import tabulate
+import torch
+import torch.nn as nn
+import numpy as np
+import torch.optim as optim
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from sklearn.ensemble import RandomForestClassifier 
+
+lines = "simpsons_script_lines.csv"
+episodes = "simpsons_episodes.csv"
+episodesDf = pd.read_csv(episodes)
+linesDf = pd.read_csv(lines)
+episodesDf["good_or_bad"] = 0
+
+for index, row in episodesDf.iterrows():
+    if(row["imdb_rating"] > 7.3491):
+        episodesDf.loc[index, "good_or_bad"] = 1
+
+#drop nan values in episode df
+episodesDf = episodesDf.dropna()
+linesDf = linesDf.dropna()
+
+HomerCount = LisaCount = BartCount = NedCount = 0
+chardf = episodesDf["id"].to_frame()
+chardf["HomerCount"] = 0
+chardf["LisaCount"] = 0
+chardf["BartCount"] = 0
+chardf["NedCount"] = 0
+
+for index, row in episodesDf.iterrows():
+    selectedRows = linesDf.loc[linesDf["episode_id"] == row["id"]]
+    for index, line in selectedRows.iterrows():
+        if(int(line["character_id"]) == 2):
+            charrow = chardf.loc[chardf["id"] == row["id"], "HomerCount"] = chardf.loc[chardf["id"] == row["id"], "HomerCount"] + 1
+        if(int(line["character_id"]) == 9):
+            charrow = chardf.loc[chardf["id"] == row["id"], "LisaCount"] = chardf.loc[chardf["id"] == row["id"], "LisaCount"] + 1
+        if(int(line["character_id"]) == 8):
+            charrow = chardf.loc[chardf["id"] == row["id"], "BartCount"] = chardf.loc[chardf["id"] == row["id"], "BartCount"] + 1
+        if(int(line["character_id"]) == 11):
+            charrow = chardf.loc[chardf["id"] == row["id"], "NedCount"] = chardf.loc[chardf["id"] == row["id"], "NedCount"] + 1
+
+
+
+    
+def npnormalize(data):
+   normalizedData = (data-np.min(data))/(np.max(data)-np.min(data))
+   return normalizedData
+
+TrainingClasses = episodesDf["good_or_bad"].to_numpy()
+
+#get input features per training classes
+InputData1 = chardf["LisaCount"].to_numpy()
+InputData2 = chardf["NedCount"].to_numpy()
+InputData3 = episodesDf["us_viewers_in_millions"].to_numpy()
+InputData4 = episodesDf["views"].to_numpy()
+
+InputData1 = npnormalize(InputData1)
+InputData2 = npnormalize(InputData2)
+InputData3 = npnormalize(InputData3)
+InputData4 = npnormalize(InputData4)
+inputData = np.column_stack((InputData3, InputData4))
+
+
+print(inputData)
+
+#split training and testing
+X_train, X_test, y_train, y_test = train_test_split(inputData, TrainingClasses, test_size=0.2, random_state=42, shuffle=True)
+
+#train random forest
+randForest_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+randForest_classifier.fit(X_train, y_train)
+
+#predict classes
+outputs = randForest_classifier.predict(X_test)
+print(outputs)
+print(y_test)
+#predicted_classes = (outputs > 0.5).int().flatten()
+predicted_classes = outputs
+
+#calculate and print scores
+accuracy = accuracy_score(y_test, predicted_classes)
+precision = precision_score(y_test, predicted_classes)
+recall = recall_score(y_test, predicted_classes)
+f1 = f1_score(y_test, predicted_classes)
+
+print(f"Accuracy: {accuracy}")
+print(f"Precision: {precision}")
+print(f"Recall: {recall}")
+print(f"F1: {f1}")
+

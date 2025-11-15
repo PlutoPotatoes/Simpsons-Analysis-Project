@@ -15,7 +15,7 @@ linesDf = pd.read_csv(lines)
 episodesDf["good_or_bad"] = 0
 
 for index, row in episodesDf.iterrows():
-    if(row["imdb_rating"] > 7.4):
+    if(row["imdb_rating"] > 7.3491):
         episodesDf.loc[index, "good_or_bad"] = 1
 
 #drop nan values in episode df
@@ -51,13 +51,12 @@ print(chardf)
 
 class SimpleNN(nn.Module):
   def __init__(self, input_size, hidden_size, output_size):
-    
     super(SimpleNN, self).__init__()
 
     self.input_size = input_size
     self.hidden_size = hidden_size
     self.output_size = output_size
-    
+
     # Define the NN layers
     self.linear1 = nn.Linear(self.input_size, self.hidden_size)
     self.relu = nn.ReLU()
@@ -90,11 +89,10 @@ InputData2 = chardf["LisaCount"].to_numpy()
 #InputData3 = chardf["BartCount"].to_numpy()
 #InputData4 = chardf["NedCount"].to_numpy()
 
-InputData1 = npnormalize(InputData1)
-InputData2 = npnormalize(InputData2)
-#InputData3 = npnormalize(InputData3)
-#InputData4 = npnormalize(InputData4)
+
 inputData = np.column_stack((InputData1, InputData2))
+
+inputData = npnormalize(inputData)
 
 #split training and testing
 X_train, X_test, y_train, y_test = train_test_split(inputData, TrainingClasses, test_size=0.2, random_state=42, shuffle=True)
@@ -105,13 +103,13 @@ X_test = torch.from_numpy(X_test).to(torch.float32)
 y = torch.from_numpy(y_train).to(torch.float32) 
 x = torch.from_numpy(X_train).to(torch.float32) 
 y = y.view(-1, 1)
-y_test = y_test.view(-1, 1).long()
+y_test = y_test.view(-1, 1)
 
 print(x)
 
 
 # The training loop
-epochs = 100
+epochs = 2000
 
 for epoch in range(epochs):
   optimizer.zero_grad()
@@ -133,8 +131,9 @@ net.eval()
 
 with torch.no_grad():
   outputs = net(X_test)
-  predicted_classes = (outputs > 0.5).long()
-  # print(predicted_classes)
+  print(outputs)
+  predicted_classes = (outputs > 0.5)
+  print(predicted_classes)
   # print(y_test)
   accuracy = accuracy_score(y_test, predicted_classes)
   precision = precision_score(y_test, predicted_classes)

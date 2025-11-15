@@ -15,7 +15,7 @@ linesDf = pd.read_csv(lines)
 episodesDf["good_or_bad"] = 0
 
 for index, row in episodesDf.iterrows():
-    if(row["imdb_rating"] > 7.4):
+    if(row["imdb_rating"] > 7.3491):
         episodesDf.loc[index, "good_or_bad"] = 1
 
 #drop nan values in episode df
@@ -83,7 +83,7 @@ y_test = y_test.view(-1, 1).long()
 
 
 # The training loop
-epochs = 100
+epochs = 1000
 
 for epoch in range(epochs):
   optimizer.zero_grad()
@@ -93,7 +93,7 @@ for epoch in range(epochs):
 
   # Compute the loss by comparing predicted outputs and true labels
   loss = loss_fn(y_preds, y.float())
-  print(f"Epoch {epoch}: training loss: {loss}")
+  #print(f"Epoch {epoch}: training loss: {loss}")
 
   # Compute the gradients
 
@@ -110,6 +110,8 @@ with torch.no_grad():
   predicted_classes = (outputs > 0.5).long()
   # print(predicted_classes)
   # print(y_test)
+  zippedout = torch.column_stack((outputs, y_test))
+  print(f"zipped out: {zippedout}")
   accuracy = accuracy_score(y_test, predicted_classes)
   precision = precision_score(y_test, predicted_classes)
   recall = recall_score(y_test, predicted_classes)
